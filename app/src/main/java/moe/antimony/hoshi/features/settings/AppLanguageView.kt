@@ -55,7 +55,7 @@ internal fun AppLanguageListItem(
 }
 
 @get:StringRes
-private val AppLanguageMode.labelRes: Int
+internal val AppLanguageMode.labelRes: Int
     get() = when (this) {
         AppLanguageMode.System -> R.string.language_follow_system
         AppLanguageMode.English -> R.string.language_english

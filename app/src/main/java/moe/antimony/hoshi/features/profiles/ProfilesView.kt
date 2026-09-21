@@ -38,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
@@ -47,6 +48,10 @@ import moe.antimony.hoshi.R
 import moe.antimony.hoshi.content.ContentLanguageProfile
 import moe.antimony.hoshi.features.settings.GroupCard
 import moe.antimony.hoshi.features.settings.GroupDivider
+import moe.antimony.hoshi.features.settings.AppLanguageMode
+import moe.antimony.hoshi.features.settings.currentAppLanguageMode
+import moe.antimony.hoshi.features.settings.isAppLanguagePickerSupported
+import moe.antimony.hoshi.features.settings.setAppLanguageMode
 import moe.antimony.hoshi.features.settings.SectionTitle
 import moe.antimony.hoshi.features.settings.SettingsDetailScaffold
 import moe.antimony.hoshi.profiles.HoshiProfile
@@ -85,6 +90,8 @@ private fun ProfilesContent(
     var editingProfile by remember { mutableStateOf<HoshiProfile?>(null) }
     var deletingProfile by remember { mutableStateOf<HoshiProfile?>(null) }
     var creatingProfile by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val appLanguageMode = context.currentAppLanguageMode()
 
     SettingsDetailScaffold(
         title = stringResource(R.string.profiles_title),
@@ -133,12 +140,15 @@ private fun ProfilesContent(
             initialName = "",
             initialLanguageId = state.createProfileInitialLanguageId(),
             allowLanguageChange = true,
+            initialAppLanguageMode = appLanguageMode,
+            allowAppLanguageChange = isAppLanguagePickerSupported(),
             supportingText = stringResource(R.string.profiles_create_copy_settings_note),
             onDismiss = { creatingProfile = false },
             onConfirm = { name, languageId ->
                 onCreateProfile(name, languageId)
                 creatingProfile = false
             },
+            onAppLanguageSelected = context::setAppLanguageMode,
         )
     }
 
@@ -148,11 +158,14 @@ private fun ProfilesContent(
             initialName = profile.name,
             initialLanguageId = profile.dictionaryLanguageId,
             allowLanguageChange = false,
+            initialAppLanguageMode = appLanguageMode,
+            allowAppLanguageChange = isAppLanguagePickerSupported(),
             onDismiss = { editingProfile = null },
             onConfirm = { name, _ ->
                 onRenameProfile(profile.id, name)
                 editingProfile = null
             },
+            onAppLanguageSelected = context::setAppLanguageMode,
         )
     }
 
@@ -354,13 +367,18 @@ private fun ProfileEditDialog(
     initialName: String,
     initialLanguageId: String,
     allowLanguageChange: Boolean,
+    initialAppLanguageMode: AppLanguageMode,
+    allowAppLanguageChange: Boolean,
     supportingText: String? = null,
     onDismiss: () -> Unit,
     onConfirm: (String, String) -> Unit,
+    onAppLanguageSelected: (AppLanguageMode) -> Unit,
 ) {
     var name by remember(initialName) { mutableStateOf(initialName) }
     var languageId by remember(initialLanguageId) { mutableStateOf(initialLanguageId) }
     var languageExpanded by remember { mutableStateOf(false) }
+    var appLanguageMode by remember(initialAppLanguageMode) { mutableStateOf(initialAppLanguageMode) }
+    var appLanguageExpanded by remember { mutableStateOf(false) }
     val selectedLanguage = ContentLanguageProfile.fromDictionaryLanguageId(languageId) ?: ContentLanguageProfile.Default
 
     AlertDialog(
@@ -409,12 +427,51 @@ private fun ProfileEditDialog(
                         }
                     }
                 }
+                if (allowAppLanguageChange) {
+                    ExposedDropdownMenuBox(
+                        expanded = appLanguageExpanded,
+                        onExpandedChange = { appLanguageExpanded = it },
+                    ) {
+                        OutlinedTextField(
+                            value = stringResource(appLanguageMode.labelRes),
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text(stringResource(R.string.profiles_interface_language)) },
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = appLanguageExpanded)
+                            },
+                            modifier = Modifier
+                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                                .fillMaxWidth(),
+                        )
+                        ExposedDropdownMenu(
+                            containerColor = moe.antimony.hoshi.ui.theme.hoshiSurfaces.overlay,
+                            border = moe.antimony.hoshi.ui.theme.hoshiContainerBorder(),
+                            tonalElevation = 0.dp,
+                            expanded = appLanguageExpanded,
+                            onDismissRequest = { appLanguageExpanded = false },
+                        ) {
+                            AppLanguageMode.entries.forEach { mode ->
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(mode.labelRes)) },
+                                    onClick = {
+                                        appLanguageMode = mode
+                                        appLanguageExpanded = false
+                                    },
+                                )
+                            }
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
             Button(
                 enabled = name.isNotBlank(),
-                onClick = { onConfirm(name, languageId) },
+                onClick = {
+                    onConfirm(name, languageId)
+                    onAppLanguageSelected(appLanguageMode)
+                },
             ) {
                 Text(stringResource(R.string.action_save))
             }

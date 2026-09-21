@@ -295,6 +295,7 @@
     <string name="profiles_create">Create Profile</string>
     <string name="profiles_create_copy_settings_note">The new profile starts as a copy of settings from the current active profile.</string>
     <string name="profiles_new_profile_name">Profile name</string>
+    <string name="profiles_interface_language">Interface language</string>
     <string name="profiles_delete_title_format" comment="Profile delete confirmation, intentionally matching book and imported-font delete confirmation formats.">Delete \"%1$s\"?</string>
     <string name="profiles_default_cannot_delete">The default profile cannot be deleted.</string>
     <string name="bookshelf_profile">Profile</string>

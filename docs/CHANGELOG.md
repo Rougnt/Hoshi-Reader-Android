@@ -8,6 +8,9 @@ Historical release notes before v1.3.0 live in [CHANGELOG_ARCHIVE.md](CHANGELOG_
 
 ### Added
 
+- Add an Interface language selector to the Profile editor. Choose Follow system,
+  English, or Simplified Chinese to override the device language for the app.
+
 - Preserve furigana readings in Reader highlights and show them in Contents.
   Select an existing highlight's exact text range to change its color, or choose
   its current color to remove it, in paginated, continuous, and VN modes.
